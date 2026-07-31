@@ -32,7 +32,7 @@ export const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   // Backend States
-  const [categories, setCategories] = useState<string[]>(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState<string[]>([]);
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [historyLogs, setHistoryLogs] = useState<StockHistoryLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -90,7 +90,7 @@ export const App: React.FC = () => {
         api.fetchProducts(),
         api.fetchHistory()
       ]);
-      setCategories(fetchedCats.length > 0 ? fetchedCats : INITIAL_CATEGORIES);
+      setCategories(fetchedCats);
       setItems(fetchedProds);
       setHistoryLogs(fetchedLogs);
     } catch (err: any) {

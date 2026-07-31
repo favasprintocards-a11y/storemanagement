@@ -1,13 +1,6 @@
 import { InventoryItem } from '../types/inventory';
 
-export const INITIAL_CATEGORIES: string[] = [
-  'Paper & Media',
-  'Apparel',
-  'Custom Merch',
-  'Packaging',
-  'Office & Supplies',
-  'Ink & Toners'
-];
+export const INITIAL_CATEGORIES: string[] = [];
 
 export const INITIAL_PRODUCTS: InventoryItem[] = [];
 
@@ -17,7 +10,5 @@ export const PRESET_IMAGES = [
   { label: 'Vinyl Roll', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&auto=format&fit=crop&q=80' },
   { label: 'Mug / Merch', url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=300&auto=format&fit=crop&q=80' },
   { label: 'Ink Cartridge', url: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=300&auto=format&fit=crop&q=80' },
-  { label: 'Packaging Box', url: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=300&auto=format&fit=crop&q=80' },
-  { label: 'Water Bottle', url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=300&auto=format&fit=crop&q=80' },
-  { label: 'Wood Blank', url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80' }
+  { label: 'Packaging Box', url: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=300&auto=format&fit=crop&q=80' }
 ];
