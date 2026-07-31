@@ -1,0 +1,16 @@
+{
+  "short_name": "Printo Store",
+  "name": "Printo Store Management",
+  "icons": [
+    {
+      "src": "/printo-logo.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#e30613",
+  "display": "standalone"
+}
