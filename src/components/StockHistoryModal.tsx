@@ -165,7 +165,9 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
                 </thead>
                 <tbody>
                   {filteredLogs.map((log) => {
-                    const isPlus = log.changeQty > 0;
+                    const isMinus = log.type === 'minus' || log.changeQty < 0;
+                    const formattedQtyChange = isMinus ? -Math.abs(log.changeQty) : `+${Math.abs(log.changeQty)}`;
+                    const changeColor = isMinus ? 'var(--danger)' : 'var(--success)';
                     return (
                       <tr key={log.id}>
                         {/* Timestamp */}
@@ -199,11 +201,11 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                               {log.previousQty} ➔
                             </span>
-                            <strong style={{ color: isPlus ? 'var(--success)' : log.changeQty < 0 ? 'var(--warning)' : 'var(--text-primary)' }}>
+                            <strong style={{ color: isMinus ? 'var(--warning)' : 'var(--text-primary)' }}>
                               {log.newQty} {log.unit}
                             </strong>
-                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: isPlus ? 'var(--success)' : 'var(--danger)' }}>
-                              ({isPlus ? `+${log.changeQty}` : log.changeQty})
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: changeColor }}>
+                              ({formattedQtyChange})
                             </span>
                           </div>
                         </td>
