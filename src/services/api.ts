@@ -1,6 +1,7 @@
 import { InventoryItem, StockHistoryLog } from '../types/inventory';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const rawBase = import.meta.env.VITE_API_BASE_URL || 'https://storemanagementbackend-t7gd.onrender.com/api';
+const API_BASE = rawBase.endsWith('/api') ? rawBase : `${rawBase.replace(/\/+$/, '')}/api`;
 
 export const api = {
   // Categories
