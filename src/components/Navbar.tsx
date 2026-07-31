@@ -48,10 +48,7 @@ export const Navbar: React.FC = () => {
         
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span className="brand-title" style={{ fontSize: '1.35rem', fontWeight: 700, lineHeight: 1.15 }}>
-            Printo Store
-          </span>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 500, letterSpacing: '0.02em', marginTop: '2px' }}>
-            Cards & Technologies
+            Printo Store Management
           </span>
         </div>
       </div>

@@ -22,6 +22,25 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
 
+  const formatTimestamp = (ts: string) => {
+    if (!ts) return 'N/A';
+    try {
+      const date = new Date(ts);
+      if (isNaN(date.getTime())) return ts;
+      return date.toLocaleString(undefined, {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    } catch {
+      return ts;
+    }
+  };
+
   if (!isOpen) return null;
 
   const filteredLogs = historyLogs.filter((log) => {
@@ -174,7 +193,7 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
                         <td style={{ whiteSpace: 'nowrap', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <Calendar size={13} style={{ opacity: 0.7 }} />
-                            <span>{log.timestamp}</span>
+                            <span>{formatTimestamp(log.timestamp)}</span>
                           </div>
                         </td>
 
