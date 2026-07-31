@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- White Background -->
+  <rect width="512" height="512" fill="#ffffff" rx="64"/>
+  
+  <!-- Orange Card Chip Symbol -->
+  <g transform="translate(256, 175) rotate(-12)">
+    <rect x="-65" y="-90" width="130" height="180" rx="26" fill="#f05a22"/>
+    <rect x="-56" y="-81" width="112" height="162" rx="20" fill="#ffffff"/>
+    <!-- Inner Wireframe Quad Chip Lines -->
+    <path d="M-30 -50 C-10 -50 -10 -15 -30 -15 M-30 50 C-10 50 -10 15 -30 15 M30 -50 C10 -50 10 -15 30 -15 M30 50 C10 50 10 15 30 15" stroke="#f05a22" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <line x1="-38" y1="0" x2="38" y2="0" stroke="#f05a22" stroke-width="7" stroke-linecap="round"/>
+  </g>
+
+  <!-- "printo" Text -->
+  <text x="256" y="355" text-anchor="middle" font-family="'Titillium Web', 'Arial Black', sans-serif" font-weight="900" font-size="96" fill="#2b2a29">printo</text>
+  
+  <!-- Green Accent over 'i' -->
+  <path d="M228 274 C236 260 252 262 254 278 C244 280 234 280 228 274 Z" fill="#8dc63f"/>
+
+  <!-- Subtitle: cards & technologies -->
+  <text x="256" y="398" text-anchor="middle" font-family="'Titillium Web', Arial, sans-serif" font-weight="700" font-size="28" fill="#58595b" letter-spacing="0.5">cards &amp; technologies</text>
+</svg>

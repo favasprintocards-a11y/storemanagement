@@ -1,16 +1,16 @@
 {
-  "short_name": "Printo Store",
+  "short_name": "Printo",
   "name": "Printo Cards & Technologies",
   "icons": [
     {
-      "src": "/printo-logo.png",
-      "type": "image/png",
-      "sizes": "192x192 512x512",
+      "src": "/shortcut-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
       "purpose": "any maskable"
     }
   ],
   "start_url": "/",
   "background_color": "#ffffff",
-  "theme_color": "#e30613",
+  "theme_color": "#ffffff",
   "display": "standalone"
 }
