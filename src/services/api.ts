@@ -86,11 +86,11 @@ export const api = {
     return res.json();
   },
 
-  async adjustStock(productId: string, type: 'add' | 'minus', changeQty: number, note?: string): Promise<{ product: InventoryItem; log: StockHistoryLog }> {
+  async adjustStock(productId: string, type: 'add' | 'minus', changeQty: number, note?: string, timestamp?: string): Promise<{ product: InventoryItem; log: StockHistoryLog }> {
     const res = await fetch(`${API_BASE}/history/adjust`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId, type, changeQty, note })
+      body: JSON.stringify({ productId, type, changeQty, note, timestamp })
     });
     if (!res.ok) {
       const err = await res.json();

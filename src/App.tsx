@@ -171,12 +171,12 @@ export const App: React.FC = () => {
   };
 
   // Stock Adjustment Handler
-  const handleConfirmStockAdjust = async (id: string, delta: number, note?: string) => {
+  const handleConfirmStockAdjust = async (id: string, delta: number, note?: string, timestamp?: string) => {
     const type = delta >= 0 ? 'add' : 'minus';
     const absDelta = Math.abs(delta);
 
     try {
-      const { product, log } = await api.adjustStock(id, type, absDelta, note);
+      const { product, log } = await api.adjustStock(id, type, absDelta, note, timestamp);
 
       setItems((prev) => prev.map((item) => (item.id === id ? product : item)));
       setHistoryLogs((prev) => [log, ...prev]);

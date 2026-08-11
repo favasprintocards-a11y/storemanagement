@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Minus, Check, Layers } from 'lucide-react';
+import { X, Plus, Minus, Check, Layers, Calendar } from 'lucide-react';
 import { InventoryItem } from '../types/inventory';
 
 interface StockAdjustModalProps {
@@ -7,7 +7,7 @@ interface StockAdjustModalProps {
   item: InventoryItem | null;
   mode: 'add' | 'minus';
   onClose: () => void;
-  onConfirmAdjust: (id: string, delta: number, note?: string) => void;
+  onConfirmAdjust: (id: string, delta: number, note?: string, timestamp?: string) => void;
 }
 
 export const StockAdjustModal: React.FC<StockAdjustModalProps> = ({
@@ -19,12 +19,20 @@ export const StockAdjustModal: React.FC<StockAdjustModalProps> = ({
 }) => {
   const [count, setCount] = useState<number | ''>('');
   const [note, setNote] = useState<string>('');
+  const [transactionDate, setTransactionDate] = useState<string>(() => {
+    const now = new Date();
+    const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    return localIso;
+  });
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
     setCount('');
     setNote('');
     setError('');
+    const now = new Date();
+    const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    setTransactionDate(localIso);
   }, [isOpen, item, mode]);
 
   if (!isOpen || !item) return null;
@@ -45,7 +53,8 @@ export const StockAdjustModal: React.FC<StockAdjustModalProps> = ({
       return;
     }
 
-    onConfirmAdjust(item.id, delta, note.trim());
+    const customIso = transactionDate ? new Date(transactionDate).toISOString() : new Date().toISOString();
+    onConfirmAdjust(item.id, delta, note.trim(), customIso);
     onClose();
   };
 
@@ -95,6 +104,20 @@ export const StockAdjustModal: React.FC<StockAdjustModalProps> = ({
                   {item.quantity} {item.unit}
                 </div>
               </div>
+            </div>
+
+            {/* Transaction Date & Time Field */}
+            <div className="form-group">
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Calendar size={15} /> Transaction Date & Time *
+              </label>
+              <input
+                type="datetime-local"
+                className="form-input"
+                value={transactionDate}
+                onChange={(e) => setTransactionDate(e.target.value)}
+                required
+              />
             </div>
 
             {/* Enter Count Field */}
