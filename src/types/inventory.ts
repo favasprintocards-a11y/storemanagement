@@ -31,7 +31,7 @@ export interface StockHistoryLog {
 export type SortField = 'name' | 'quantity' | 'id';
 export type SortOrder = 'asc' | 'desc';
 
-export type DateRangeFilter = 'all' | 'today' | 'yesterday' | '7days' | '30days' | 'this_month' | 'custom';
+export type DateRangeFilter = 'all' | 'today' | 'yesterday' | '7days' | '30days' | 'this_month' | 'specific_month' | 'custom';
 
 export interface FilterOptions {
   searchQuery: string;
@@ -40,6 +40,7 @@ export interface FilterOptions {
   dateRange: DateRangeFilter;
   startDate?: string;
   endDate?: string;
+  selectedMonth?: string;
   sortField: SortField;
   sortOrder: SortOrder;
 }

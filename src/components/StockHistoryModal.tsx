@@ -45,6 +45,12 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
   const [dateRange, setDateRange] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
+  });
   const [activeProductFilter, setActiveProductFilter] = useState<string | null>(selectedProductFilter || null);
 
   useEffect(() => {
@@ -76,8 +82,8 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
     // Category filter
     if (selectedCategory !== 'All' && log.category !== selectedCategory) return false;
 
-    // Date range filter
-    if (!isWithinDateRange(log.timestamp, dateRange, startDate, endDate)) {
+    // Date range filter (supports preset, custom dates, or specific month)
+    if (!isWithinDateRange(log.timestamp, dateRange, startDate, endDate, selectedMonth)) {
       return false;
     }
 
@@ -119,6 +125,8 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
     setDateRange('all');
     setStartDate('');
     setEndDate('');
+    const d = new Date();
+    setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
     setActiveProductFilter(null);
   };
 
@@ -399,7 +407,7 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
               {/* Date Range Filter Select */}
               <select
                 className="filter-select"
-                style={{ padding: '0.42rem 1.8rem 0.42rem 0.75rem', fontSize: '0.82rem', flex: '1 1 130px' }}
+                style={{ padding: '0.42rem 1.8rem 0.42rem 0.75rem', fontSize: '0.82rem', flex: '1 1 140px' }}
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
               >
@@ -409,9 +417,25 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
                 <option value="7days">Last 7 Days</option>
                 <option value="30days">Last 30 Days</option>
                 <option value="this_month">This Month</option>
+                <option value="specific_month">Select Month (YYYY-MM)...</option>
                 <option value="custom">Custom Date Range...</option>
               </select>
             </div>
+
+            {/* Specific Month Input Picker Bar */}
+            {dateRange === 'specific_month' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', paddingTop: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>Select Month:</label>
+                  <input
+                    type="month"
+                    className="date-picker-input"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Custom Start & End Date Input Bar */}
             {dateRange === 'custom' && (
@@ -485,7 +509,7 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
 
                   {dateRange !== 'all' && (
                     <span className="category-pill" style={{ fontSize: '0.72rem', padding: '2px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      Date: {getDateRangeLabel(dateRange, startDate, endDate)}
+                      Date: {getDateRangeLabel(dateRange, startDate, endDate, selectedMonth)}
                       <X size={12} style={{ cursor: 'pointer' }} onClick={() => {
                         setDateRange('all');
                         setStartDate('');

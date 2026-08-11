@@ -47,6 +47,7 @@ export const App: React.FC = () => {
     dateRange: 'all',
     startDate: '',
     endDate: '',
+    selectedMonth: '',
     sortField: 'name',
     sortOrder: 'asc'
   });
@@ -118,7 +119,7 @@ export const App: React.FC = () => {
   // Reset pagination to page 1 whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters.searchQuery, filters.category, filters.status, filters.dateRange, filters.startDate, filters.endDate, filters.sortField, filters.sortOrder]);
+  }, [filters.searchQuery, filters.category, filters.status, filters.dateRange, filters.startDate, filters.endDate, filters.selectedMonth, filters.sortField, filters.sortOrder]);
 
   const addToast = (title: string, description?: string, type: ToastMessage['type'] = 'success') => {
     const newId = Math.random().toString(36).substring(2, 9);
@@ -284,7 +285,7 @@ export const App: React.FC = () => {
         calculatedStatus === filters.status ||
         item.status === filters.status;
 
-      const matchesDate = isWithinDateRange(item.lastUpdated, filters.dateRange, filters.startDate, filters.endDate);
+      const matchesDate = isWithinDateRange(item.lastUpdated, filters.dateRange, filters.startDate, filters.endDate, filters.selectedMonth);
 
       return matchesSearch && matchesCategory && matchesStatus && matchesDate;
     }).sort((a, b) => {
@@ -390,6 +391,8 @@ export const App: React.FC = () => {
           onStartDateChange={(startDate) => setFilters((prev) => ({ ...prev, startDate }))}
           endDate={filters.endDate}
           onEndDateChange={(endDate) => setFilters((prev) => ({ ...prev, endDate }))}
+          selectedMonth={filters.selectedMonth}
+          onMonthChange={(selectedMonth) => setFilters((prev) => ({ ...prev, selectedMonth }))}
           categories={categories}
           historyLogsCount={historyLogs.length}
           onAddProductClick={() => {

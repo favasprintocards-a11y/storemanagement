@@ -15,6 +15,8 @@ interface FilterBarProps {
   onStartDateChange: (date: string) => void;
   endDate?: string;
   onEndDateChange: (date: string) => void;
+  selectedMonth?: string;
+  onMonthChange?: (month: string) => void;
   categories: string[];
   historyLogsCount: number;
   onAddProductClick: () => void;
@@ -37,6 +39,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onStartDateChange,
   endDate = '',
   onEndDateChange,
+  selectedMonth = '',
+  onMonthChange,
   categories,
   historyLogsCount,
   onAddProductClick,
@@ -109,8 +113,24 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <option value="7days">Last 7 Days</option>
           <option value="30days">Last 30 Days</option>
           <option value="this_month">This Month</option>
+          <option value="specific_month">Select Month (YYYY-MM)...</option>
           <option value="custom">Custom Date Range...</option>
         </select>
+
+        {/* Specific Month Input Picker */}
+        {selectedDateRange === 'specific_month' && (
+          <div className="custom-date-inputs">
+            <div className="date-input-wrapper">
+              <label className="date-input-label">Month:</label>
+              <input
+                type="month"
+                className="date-picker-input"
+                value={selectedMonth}
+                onChange={(e) => onMonthChange && onMonthChange(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Custom Start & End Date Inputs */}
         {selectedDateRange === 'custom' && (

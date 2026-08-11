@@ -1,13 +1,14 @@
-export type DateRangePreset = 'all' | 'today' | 'yesterday' | '7days' | '30days' | 'this_month' | 'custom';
+export type DateRangePreset = 'all' | 'today' | 'yesterday' | '7days' | '30days' | 'this_month' | 'specific_month' | 'custom';
 
 /**
- * Checks whether a given timestamp string falls within a specified date range preset or custom start/end dates.
+ * Checks whether a given timestamp string falls within a specified date range preset, specific month (YYYY-MM), or custom start/end dates.
  */
 export function isWithinDateRange(
   timestampStr: string,
   dateRange: DateRangePreset | string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  selectedMonth?: string
 ): boolean {
   if (!dateRange || dateRange === 'all') return true;
   if (!timestampStr) return false;
@@ -56,6 +57,20 @@ export function isWithinDateRange(
     );
   }
 
+  if (dateRange === 'specific_month' || (selectedMonth && /^\d{4}-\d{2}$/.test(selectedMonth))) {
+    const targetMonthStr = selectedMonth || (dateRange.includes('-') ? dateRange : '');
+    if (targetMonthStr && /^\d{4}-\d{2}$/.test(targetMonthStr)) {
+      const [yearStr, monthStr] = targetMonthStr.split('-');
+      const targetYear = parseInt(yearStr, 10);
+      const targetMonth = parseInt(monthStr, 10) - 1; // 0-indexed month
+
+      return (
+        itemDate.getFullYear() === targetYear &&
+        itemDate.getMonth() === targetMonth
+      );
+    }
+  }
+
   if (dateRange === 'custom') {
     if (startDate) {
       const start = new Date(startDate);
@@ -81,7 +96,8 @@ export function isWithinDateRange(
 export function getDateRangeLabel(
   dateRange: string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  selectedMonth?: string
 ): string {
   switch (dateRange) {
     case 'today':
@@ -94,12 +110,24 @@ export function getDateRangeLabel(
       return 'Last 30 Days';
     case 'this_month':
       return 'This Month';
+    case 'specific_month':
+      if (selectedMonth && /^\d{4}-\d{2}$/.test(selectedMonth)) {
+        const [yearStr, monthStr] = selectedMonth.split('-');
+        const date = new Date(parseInt(yearStr, 10), parseInt(monthStr, 10) - 1, 1);
+        return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+      }
+      return 'Specific Month';
     case 'custom':
       if (startDate && endDate) return `${startDate} to ${endDate}`;
       if (startDate) return `From ${startDate}`;
       if (endDate) return `Until ${endDate}`;
       return 'Custom Range';
     default:
+      if (selectedMonth && /^\d{4}-\d{2}$/.test(selectedMonth)) {
+        const [yearStr, monthStr] = selectedMonth.split('-');
+        const date = new Date(parseInt(yearStr, 10), parseInt(monthStr, 10) - 1, 1);
+        return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+      }
       return 'All Time';
   }
 }
