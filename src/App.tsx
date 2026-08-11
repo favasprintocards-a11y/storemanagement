@@ -21,6 +21,7 @@ import {
   StockHistoryLog
 } from './types/inventory';
 import { INITIAL_CATEGORIES } from './data/mockData';
+import { isWithinDateRange } from './utils/dateUtils';
 
 const THEME_STORAGE_KEY = 'printo_theme_preference';
 
@@ -43,6 +44,9 @@ export const App: React.FC = () => {
     searchQuery: '',
     category: 'All',
     status: 'All',
+    dateRange: 'all',
+    startDate: '',
+    endDate: '',
     sortField: 'name',
     sortOrder: 'asc'
   });
@@ -114,7 +118,7 @@ export const App: React.FC = () => {
   // Reset pagination to page 1 whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters.searchQuery, filters.category, filters.status, filters.sortField, filters.sortOrder]);
+  }, [filters.searchQuery, filters.category, filters.status, filters.dateRange, filters.startDate, filters.endDate, filters.sortField, filters.sortOrder]);
 
   const addToast = (title: string, description?: string, type: ToastMessage['type'] = 'success') => {
     const newId = Math.random().toString(36).substring(2, 9);
@@ -280,7 +284,9 @@ export const App: React.FC = () => {
         calculatedStatus === filters.status ||
         item.status === filters.status;
 
-      return matchesSearch && matchesCategory && matchesStatus;
+      const matchesDate = isWithinDateRange(item.lastUpdated, filters.dateRange, filters.startDate, filters.endDate);
+
+      return matchesSearch && matchesCategory && matchesStatus && matchesDate;
     }).sort((a, b) => {
       const field = filters.sortField;
       const order = filters.sortOrder === 'asc' ? 1 : -1;
@@ -370,9 +376,32 @@ export const App: React.FC = () => {
           onFilterByStatus={(status) => setFilters((prev) => ({ ...prev, status }))}
         />
 
-
-
-
+        {/* Global Operational Filter Bar */}
+        <FilterBar
+          searchQuery={filters.searchQuery}
+          onSearchChange={(searchQuery) => setFilters((prev) => ({ ...prev, searchQuery }))}
+          selectedCategory={filters.category}
+          onCategoryChange={(category) => setFilters((prev) => ({ ...prev, category }))}
+          selectedStatus={filters.status}
+          onStatusChange={(status) => setFilters((prev) => ({ ...prev, status }))}
+          selectedDateRange={filters.dateRange}
+          onDateRangeChange={(dateRange) => setFilters((prev) => ({ ...prev, dateRange }))}
+          startDate={filters.startDate}
+          onStartDateChange={(startDate) => setFilters((prev) => ({ ...prev, startDate }))}
+          endDate={filters.endDate}
+          onEndDateChange={(endDate) => setFilters((prev) => ({ ...prev, endDate }))}
+          categories={categories}
+          historyLogsCount={historyLogs.length}
+          onAddProductClick={() => {
+            setEditingItem(null);
+            setFormDefaultCategory(categories[0] || 'Paper & Media');
+            setIsFormOpen(true);
+          }}
+          onOpenCategoryManager={() => setIsCategoryModalOpen(true)}
+          onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
+          onExportCSV={handleExportCSV}
+          onResetData={handleResetData}
+        />
 
         {/* Dynamic View Mode Renderer */}
         {viewMode === 'cards' ? (

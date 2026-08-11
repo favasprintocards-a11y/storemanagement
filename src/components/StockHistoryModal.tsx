@@ -17,6 +17,7 @@ import {
   Package
 } from 'lucide-react';
 import { StockHistoryLog } from '../types/inventory';
+import { isWithinDateRange, getDateRangeLabel, DateRangePreset } from '../utils/dateUtils';
 
 interface StockHistoryModalProps {
   isOpen: boolean;
@@ -42,6 +43,8 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [dateRange, setDateRange] = useState<string>('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [activeProductFilter, setActiveProductFilter] = useState<string | null>(selectedProductFilter || null);
 
   useEffect(() => {
@@ -74,23 +77,8 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
     if (selectedCategory !== 'All' && log.category !== selectedCategory) return false;
 
     // Date range filter
-    if (dateRange !== 'all') {
-      const logDate = new Date(log.timestamp);
-      const now = new Date();
-      if (!isNaN(logDate.getTime())) {
-        if (dateRange === 'today') {
-          const isSameDay = logDate.getDate() === now.getDate() &&
-                            logDate.getMonth() === now.getMonth() &&
-                            logDate.getFullYear() === now.getFullYear();
-          if (!isSameDay) return false;
-        } else if (dateRange === '7days') {
-          const diffMs = now.getTime() - logDate.getTime();
-          if (diffMs > 7 * 24 * 60 * 60 * 1000) return false;
-        } else if (dateRange === '30days') {
-          const diffMs = now.getTime() - logDate.getTime();
-          if (diffMs > 30 * 24 * 60 * 60 * 1000) return false;
-        }
-      }
+    if (!isWithinDateRange(log.timestamp, dateRange, startDate, endDate)) {
+      return false;
     }
 
     // Search query filter
@@ -106,9 +94,9 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
     return true;
   });
 
-  // Calculate statistics
-  const stockInLogs = historyLogs.filter(l => isStockIn(l.type, l.changeQty));
-  const stockOutLogs = historyLogs.filter(l => isStockOut(l.type, l.changeQty));
+  // Calculate statistics based on current date range & active filters
+  const stockInLogs = filteredLogs.filter(l => isStockIn(l.type, l.changeQty));
+  const stockOutLogs = filteredLogs.filter(l => isStockOut(l.type, l.changeQty));
 
   const totalStockInQty = stockInLogs.reduce((acc, l) => acc + Math.abs(l.changeQty || 0), 0);
   const totalStockOutQty = stockOutLogs.reduce((acc, l) => acc + Math.abs(l.changeQty || 0), 0);
@@ -119,6 +107,8 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
     filterType !== 'all' || 
     selectedCategory !== 'All' || 
     dateRange !== 'all' || 
+    startDate !== '' ||
+    endDate !== '' ||
     activeProductFilter !== null;
 
   const handleResetFilters = () => {
@@ -127,6 +117,8 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
     setFilterType('all');
     setSelectedCategory('All');
     setDateRange('all');
+    setStartDate('');
+    setEndDate('');
     setActiveProductFilter(null);
   };
 
@@ -407,16 +399,55 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
               {/* Date Range Filter Select */}
               <select
                 className="filter-select"
-                style={{ padding: '0.42rem 1.8rem 0.42rem 0.75rem', fontSize: '0.82rem', flex: '1 1 120px' }}
+                style={{ padding: '0.42rem 1.8rem 0.42rem 0.75rem', fontSize: '0.82rem', flex: '1 1 130px' }}
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
               >
-                <option value="all">All Time</option>
+                <option value="all">📅 All Time</option>
                 <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
                 <option value="7days">Last 7 Days</option>
                 <option value="30days">Last 30 Days</option>
+                <option value="this_month">This Month</option>
+                <option value="custom">Custom Date Range...</option>
               </select>
             </div>
+
+            {/* Custom Start & End Date Input Bar */}
+            {dateRange === 'custom' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', paddingTop: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>From:</label>
+                  <input
+                    type="date"
+                    className="date-picker-input"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>To:</label>
+                  <input
+                    type="date"
+                    className="date-picker-input"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+                {(startDate || endDate) && (
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                    onClick={() => {
+                      setStartDate('');
+                      setEndDate('');
+                    }}
+                  >
+                    Clear Dates
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Active Filters Bar & Reset Action */}
             {hasActiveFilters && (
@@ -454,8 +485,12 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
 
                   {dateRange !== 'all' && (
                     <span className="category-pill" style={{ fontSize: '0.72rem', padding: '2px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      Date: {dateRange}
-                      <X size={12} style={{ cursor: 'pointer' }} onClick={() => setDateRange('all')} />
+                      Date: {getDateRangeLabel(dateRange, startDate, endDate)}
+                      <X size={12} style={{ cursor: 'pointer' }} onClick={() => {
+                        setDateRange('all');
+                        setStartDate('');
+                        setEndDate('');
+                      }} />
                     </span>
                   )}
 
