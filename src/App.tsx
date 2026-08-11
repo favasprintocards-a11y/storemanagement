@@ -265,7 +265,20 @@ export const App: React.FC = () => {
         item.id.toLowerCase().includes(q);
 
       const matchesCategory = filters.category === 'All' || item.category === filters.category;
-      const matchesStatus = filters.status === 'All' || item.status === filters.status;
+
+      const qty = Number(item.quantity || 0);
+      const min = Number(item.minThreshold || 0);
+      let calculatedStatus: 'In Stock' | 'Low Stock' | 'Out of Stock' = 'In Stock';
+      if (qty <= 0) {
+        calculatedStatus = 'Out of Stock';
+      } else if (qty <= min) {
+        calculatedStatus = 'Low Stock';
+      }
+
+      const matchesStatus =
+        filters.status === 'All' ||
+        calculatedStatus === filters.status ||
+        item.status === filters.status;
 
       return matchesSearch && matchesCategory && matchesStatus;
     }).sort((a, b) => {
@@ -458,6 +471,7 @@ export const App: React.FC = () => {
       <StockHistoryModal
         isOpen={isHistoryModalOpen}
         historyLogs={historyLogs}
+        categories={categories}
         selectedProductFilter={selectedHistoryProduct}
         onClose={() => {
           setIsHistoryModalOpen(false);

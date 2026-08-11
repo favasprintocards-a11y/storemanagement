@@ -40,8 +40,9 @@ export const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* 2. Low Stock Alerts (Clickable Filter) */}
       <div 
         className={`kpi-card ${activeStatusFilter === 'Low Stock' ? 'active' : ''}`}
-        onClick={() => onFilterByStatus('Low Stock')}
-        title="Click to filter low stock items"
+        onClick={() => onFilterByStatus(activeStatusFilter === 'Low Stock' ? 'All' : 'Low Stock')}
+        title="Click to show low stock products"
+        style={{ cursor: 'pointer' }}
       >
         <div className="kpi-content">
           <span className="kpi-label">Low Stock Alerts</span>
@@ -54,11 +55,12 @@ export const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         </div>
       </div>
 
-      {/* 4. Out of Stock Items (Clickable Filter) */}
+      {/* 3. Out of Stock Items (Clickable Filter) */}
       <div 
         className={`kpi-card ${activeStatusFilter === 'Out of Stock' ? 'active' : ''}`}
-        onClick={() => onFilterByStatus('Out of Stock')}
-        title="Click to filter out-of-stock items"
+        onClick={() => onFilterByStatus(activeStatusFilter === 'Out of Stock' ? 'All' : 'Out of Stock')}
+        title="Click to show out-of-stock products"
+        style={{ cursor: 'pointer' }}
       >
         <div className="kpi-content">
           <span className="kpi-label">Out of Stock</span>
