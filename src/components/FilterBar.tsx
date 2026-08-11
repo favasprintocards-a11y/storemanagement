@@ -19,7 +19,7 @@ interface FilterBarProps {
   onMonthChange?: (month: string) => void;
   categories: string[];
   historyLogsCount: number;
-  onAddProductClick: () => void;
+  onAddProductClick?: () => void;
   onOpenCategoryManager: () => void;
   onOpenHistoryModal: () => void;
   onExportCSV: () => void;
@@ -205,14 +205,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           title="Reset or Clear All Products"
         >
           <RotateCcw size={16} />
-        </button>
-
-        <button
-          className="btn btn-primary shadow-sm"
-          onClick={onAddProductClick}
-        >
-          <Plus size={18} />
-          <span>Add Product</span>
         </button>
       </div>
     </div>
