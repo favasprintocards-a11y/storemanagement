@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, Plus, Download, RotateCcw, History, Layers, Calendar } from 'lucide-react';
+import { Search, X, Plus, Download, History, Layers, Calendar } from 'lucide-react';
 import { DateRangeFilter } from '../types/inventory';
 
 interface FilterBarProps {
@@ -23,7 +23,7 @@ interface FilterBarProps {
   onOpenCategoryManager: () => void;
   onOpenHistoryModal: () => void;
   onExportCSV: () => void;
-  onResetData: () => void;
+  onResetData?: () => void;
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -197,14 +197,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         >
           <Download size={16} />
           <span>Export CSV</span>
-        </button>
-
-        <button
-          className="btn btn-secondary"
-          onClick={onResetData}
-          title="Reset or Clear All Products"
-        >
-          <RotateCcw size={16} />
         </button>
       </div>
     </div>
