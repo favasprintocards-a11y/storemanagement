@@ -9,7 +9,6 @@ import { StockAdjustModal } from './components/StockAdjustModal';
 import { StockHistoryModal } from './components/StockHistoryModal';
 import { DeleteConfirmModal } from './components/DeleteConfirmModal';
 import { ToastContainer } from './components/Toast';
-import { FilterBar } from './components/FilterBar';
 import { LayoutGrid, Table } from 'lucide-react';
 import { api } from './services/api';
 
@@ -377,34 +376,7 @@ export const App: React.FC = () => {
           onFilterByStatus={(status) => setFilters((prev) => ({ ...prev, status }))}
         />
 
-        {/* Global Operational Filter Bar */}
-        <FilterBar
-          searchQuery={filters.searchQuery}
-          onSearchChange={(searchQuery) => setFilters((prev) => ({ ...prev, searchQuery }))}
-          selectedCategory={filters.category}
-          onCategoryChange={(category) => setFilters((prev) => ({ ...prev, category }))}
-          selectedStatus={filters.status}
-          onStatusChange={(status) => setFilters((prev) => ({ ...prev, status }))}
-          selectedDateRange={filters.dateRange}
-          onDateRangeChange={(dateRange) => setFilters((prev) => ({ ...prev, dateRange }))}
-          startDate={filters.startDate}
-          onStartDateChange={(startDate) => setFilters((prev) => ({ ...prev, startDate }))}
-          endDate={filters.endDate}
-          onEndDateChange={(endDate) => setFilters((prev) => ({ ...prev, endDate }))}
-          selectedMonth={filters.selectedMonth}
-          onMonthChange={(selectedMonth) => setFilters((prev) => ({ ...prev, selectedMonth }))}
-          categories={categories}
-          historyLogsCount={historyLogs.length}
-          onAddProductClick={() => {
-            setEditingItem(null);
-            setFormDefaultCategory(categories[0] || 'Paper & Media');
-            setIsFormOpen(true);
-          }}
-          onOpenCategoryManager={() => setIsCategoryModalOpen(true)}
-          onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
-          onExportCSV={handleExportCSV}
-          onResetData={handleResetData}
-        />
+
 
         {/* Dynamic View Mode Renderer */}
         {viewMode === 'cards' ? (
