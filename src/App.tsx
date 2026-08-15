@@ -19,7 +19,7 @@ import {
   ToastMessage,
   StockHistoryLog
 } from './types/inventory';
-import { INITIAL_CATEGORIES } from './data/mockData';
+import { INITIAL_CATEGORIES, INITIAL_PRODUCTS } from './data/mockData';
 import { isWithinDateRange } from './utils/dateUtils';
 
 const THEME_STORAGE_KEY = 'printo_theme_preference';
@@ -84,22 +84,66 @@ export const App: React.FC = () => {
   // Search input DOM ref for header quick trigger
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Load initial data from backend API
+  // Load initial data with local persistent storage fallback
   const loadInitialData = async () => {
     setIsLoading(true);
     setApiError(null);
+
+    // 1. Load from localStorage cache first for instant display
+    const cachedCats = localStorage.getItem('printo_categories');
+    const cachedItems = localStorage.getItem('printo_inventory_items');
+    const cachedLogs = localStorage.getItem('printo_history_logs');
+
+    let initialCats = INITIAL_CATEGORIES;
+    let initialItems = INITIAL_PRODUCTS;
+    let initialLogs: StockHistoryLog[] = [];
+
+    if (cachedCats) {
+      try {
+        const parsed = JSON.parse(cachedCats);
+        if (Array.isArray(parsed) && parsed.length > 0) initialCats = parsed;
+      } catch (e) {}
+    }
+
+    if (cachedItems) {
+      try {
+        const parsed = JSON.parse(cachedItems);
+        if (Array.isArray(parsed) && parsed.length > 0) initialItems = parsed;
+      } catch (e) {}
+    }
+
+    if (cachedLogs) {
+      try {
+        const parsed = JSON.parse(cachedLogs);
+        if (Array.isArray(parsed)) initialLogs = parsed;
+      } catch (e) {}
+    }
+
+    setCategories(initialCats);
+    setItems(initialItems);
+    setHistoryLogs(initialLogs);
+
+    // 2. Fetch live data from backend server
     try {
       const [fetchedCats, fetchedProds, fetchedLogs] = await Promise.all([
         api.fetchCategories(),
         api.fetchProducts(),
         api.fetchHistory()
       ]);
-      setCategories(fetchedCats);
-      setItems(fetchedProds);
-      setHistoryLogs(fetchedLogs);
+
+      const finalCats = Array.isArray(fetchedCats) && fetchedCats.length > 0 ? fetchedCats : initialCats;
+      const finalItems = Array.isArray(fetchedProds) && fetchedProds.length > 0 ? fetchedProds : initialItems;
+      const finalLogs = Array.isArray(fetchedLogs) ? fetchedLogs : initialLogs;
+
+      setCategories(finalCats);
+      setItems(finalItems);
+      setHistoryLogs(finalLogs);
+
+      localStorage.setItem('printo_categories', JSON.stringify(finalCats));
+      localStorage.setItem('printo_inventory_items', JSON.stringify(finalItems));
+      localStorage.setItem('printo_history_logs', JSON.stringify(finalLogs));
     } catch (err: any) {
-      console.error('Failed to connect to backend server:', err);
-      setApiError('Unable to connect to backend server. Make sure backend is running on http://localhost:5000');
+      console.warn('Backend server fetch warning (using local persistent storage):', err);
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +152,23 @@ export const App: React.FC = () => {
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  // Persistent localStorage auto-sync
+  useEffect(() => {
+    if (categories.length > 0) {
+      localStorage.setItem('printo_categories', JSON.stringify(categories));
+    }
+  }, [categories]);
+
+  useEffect(() => {
+    if (items.length > 0) {
+      localStorage.setItem('printo_inventory_items', JSON.stringify(items));
+    }
+  }, [items]);
+
+  useEffect(() => {
+    localStorage.setItem('printo_history_logs', JSON.stringify(historyLogs));
+  }, [historyLogs]);
 
   // Sync HTML data-theme attribute
   useEffect(() => {
