@@ -94,21 +94,21 @@ export const App: React.FC = () => {
     const cachedItems = localStorage.getItem('printo_inventory_items');
     const cachedLogs = localStorage.getItem('printo_history_logs');
 
-    let initialCats = INITIAL_CATEGORIES;
-    let initialItems = INITIAL_PRODUCTS;
+    let initialCats: string[] = [];
+    let initialItems: InventoryItem[] = [];
     let initialLogs: StockHistoryLog[] = [];
 
     if (cachedCats) {
       try {
         const parsed = JSON.parse(cachedCats);
-        if (Array.isArray(parsed) && parsed.length > 0) initialCats = parsed;
+        if (Array.isArray(parsed)) initialCats = parsed;
       } catch (e) {}
     }
 
     if (cachedItems) {
       try {
         const parsed = JSON.parse(cachedItems);
-        if (Array.isArray(parsed) && parsed.length > 0) initialItems = parsed;
+        if (Array.isArray(parsed)) initialItems = parsed;
       } catch (e) {}
     }
 
@@ -131,8 +131,8 @@ export const App: React.FC = () => {
         api.fetchHistory()
       ]);
 
-      const finalCats = Array.isArray(fetchedCats) && fetchedCats.length > 0 ? fetchedCats : initialCats;
-      const finalItems = Array.isArray(fetchedProds) && fetchedProds.length > 0 ? fetchedProds : initialItems;
+      const finalCats = Array.isArray(fetchedCats) ? fetchedCats : initialCats;
+      const finalItems = Array.isArray(fetchedProds) ? fetchedProds : initialItems;
       const finalLogs = Array.isArray(fetchedLogs) ? fetchedLogs : initialLogs;
 
       setCategories(finalCats);
@@ -155,15 +155,11 @@ export const App: React.FC = () => {
 
   // Persistent localStorage auto-sync
   useEffect(() => {
-    if (categories.length > 0) {
-      localStorage.setItem('printo_categories', JSON.stringify(categories));
-    }
+    localStorage.setItem('printo_categories', JSON.stringify(categories));
   }, [categories]);
 
   useEffect(() => {
-    if (items.length > 0) {
-      localStorage.setItem('printo_inventory_items', JSON.stringify(items));
-    }
+    localStorage.setItem('printo_inventory_items', JSON.stringify(items));
   }, [items]);
 
   useEffect(() => {
@@ -257,10 +253,26 @@ export const App: React.FC = () => {
       if (editingItem) {
         const updated = await api.updateProduct(editingItem.id, formData);
         setItems((prev) => prev.map((item) => (item.id === editingItem.id ? updated : item)));
+        if (updated.category && !categories.includes(updated.category)) {
+          try {
+            const updatedCats = await api.addCategory(updated.category);
+            setCategories(updatedCats);
+          } catch (e) {
+            setCategories((prev) => Array.from(new Set([...prev, updated.category])));
+          }
+        }
         addToast('Product Updated', `Successfully updated "${updated.name}".`, 'success');
       } else {
         const created = await api.createProduct(formData);
         setItems((prev) => [created, ...prev]);
+        if (created.category && !categories.includes(created.category)) {
+          try {
+            const updatedCats = await api.addCategory(created.category);
+            setCategories(updatedCats);
+          } catch (e) {
+            setCategories((prev) => Array.from(new Set([...prev, created.category])));
+          }
+        }
         const updatedLogs = await api.fetchHistory();
         setHistoryLogs(updatedLogs);
         addToast('Product Added', `"${created.name}" created under "${created.category}".`, 'success');

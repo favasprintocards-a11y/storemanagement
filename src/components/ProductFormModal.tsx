@@ -111,15 +111,25 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               {/* Category */}
               <div className="form-group">
                 <label className="form-label">Category *</label>
-                <select
-                  className="form-select"
-                  value={formData.category || categories[0] || ''}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                {categories.length > 0 ? (
+                  <select
+                    className="form-select"
+                    value={formData.category || categories[0] || ''}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Enter category name"
+                    value={formData.category || ''}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  />
+                )}
               </div>
 
               {/* Unit Type (Manual Text Entry) */}
