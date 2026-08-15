@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, AlertTriangle, AlertOctagon } from 'lucide-react';
+import { AlertTriangle, AlertOctagon } from 'lucide-react';
 import { DashboardStats } from '../types/inventory';
 
 interface DashboardMetricsProps {
@@ -13,31 +13,9 @@ export const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   activeStatusFilter,
   onFilterByStatus
 }) => {
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 2
-    }).format(val);
-  };
-
   return (
     <div className="dashboard-grid">
-      {/* 1. Total Items in Stock */}
-      <div 
-        className={`kpi-card ${activeStatusFilter === 'All' ? 'active' : ''}`}
-        onClick={() => onFilterByStatus('All')}
-      >
-        <div className="kpi-content">
-          <span className="kpi-label">Total Unique Products</span>
-          <span className="kpi-value">{stats.totalItems}</span>
-        </div>
-        <div className="kpi-icon-wrapper kpi-icon-primary">
-          <Package size={24} />
-        </div>
-      </div>
-
-      {/* 2. Low Stock Alerts (Clickable Filter) */}
+      {/* 1. Low Stock Alerts (Clickable Filter) */}
       <div 
         className={`kpi-card ${activeStatusFilter === 'Low Stock' ? 'active' : ''}`}
         onClick={() => onFilterByStatus(activeStatusFilter === 'Low Stock' ? 'All' : 'Low Stock')}

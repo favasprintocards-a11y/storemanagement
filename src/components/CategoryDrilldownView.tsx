@@ -171,25 +171,7 @@ export const CategoryDrilldownView: React.FC<CategoryDrilldownViewProps> = ({
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }} onClick={(e) => e.stopPropagation()}>
-                      {onDeleteCategory && (
-                        <button
-                          className="action-btn delete"
-                          title={`Delete "${cat}" Category`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCategoryToDelete(cat);
-                          }}
-                          style={{
-                            padding: '4px 6px',
-                            borderRadius: 'var(--radius-sm)',
-                            color: 'var(--danger)',
-                            background: 'var(--danger-bg)'
-                          }}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
                       <ChevronRight size={20} style={{ color: 'var(--text-muted)' }} />
                     </div>
                   </div>
