@@ -123,31 +123,66 @@ export const App: React.FC = () => {
     setItems(initialItems);
     setHistoryLogs(initialLogs);
 
-    // 2. Fetch live data from backend server
-    try {
-      const [fetchedCats, fetchedProds, fetchedLogs] = await Promise.all([
-        api.fetchCategories(),
-        api.fetchProducts(),
-        api.fetchHistory()
-      ]);
+      // 2. Fetch live data from backend server and perform non-destructive merge
+      try {
+        const [fetchedCats, fetchedProds, fetchedLogs] = await Promise.all([
+          api.fetchCategories(),
+          api.fetchProducts(),
+          api.fetchHistory()
+        ]);
 
-      const finalCats = Array.isArray(fetchedCats) ? fetchedCats : initialCats;
-      const finalItems = Array.isArray(fetchedProds) ? fetchedProds : initialItems;
-      const finalLogs = Array.isArray(fetchedLogs) ? fetchedLogs : initialLogs;
+        const serverCats = Array.isArray(fetchedCats) ? fetchedCats : [];
+        const serverProds = Array.isArray(fetchedProds) ? fetchedProds : [];
+        const serverLogs = Array.isArray(fetchedLogs) ? fetchedLogs : [];
 
-      setCategories(finalCats);
-      setItems(finalItems);
-      setHistoryLogs(finalLogs);
+        // Merge categories (preserve both server and local categories)
+        const catSet = new Set<string>([...serverCats, ...initialCats]);
+        const finalCats = Array.from(catSet);
 
-      localStorage.setItem('printo_categories', JSON.stringify(finalCats));
-      localStorage.setItem('printo_inventory_items', JSON.stringify(finalItems));
-      localStorage.setItem('printo_history_logs', JSON.stringify(finalLogs));
-    } catch (err: any) {
-      console.warn('Backend server fetch warning (using local persistent storage):', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        // Merge products (preserve locally stored items by ID if server lacks them)
+        const itemMap = new Map<string, InventoryItem>();
+        initialItems.forEach(item => { if (item && item.id) itemMap.set(item.id, item); });
+        serverProds.forEach(item => { if (item && item.id) itemMap.set(item.id, item); });
+        const finalItems = Array.from(itemMap.values());
+
+        // Merge history logs
+        const logMap = new Map<string, StockHistoryLog>();
+        initialLogs.forEach(log => { if (log && log.id) logMap.set(log.id, log); });
+        serverLogs.forEach(log => { if (log && log.id) logMap.set(log.id, log); });
+        const finalLogs = Array.from(logMap.values());
+
+        setCategories(finalCats);
+        setItems(finalItems);
+        setHistoryLogs(finalLogs);
+
+        localStorage.setItem('printo_categories', JSON.stringify(finalCats));
+        localStorage.setItem('printo_inventory_items', JSON.stringify(finalItems));
+        localStorage.setItem('printo_history_logs', JSON.stringify(finalLogs));
+
+        // Back-sync any local items/categories to backend if backend was missing them
+        if (serverProds.length < finalItems.length) {
+          const serverProdIds = new Set(serverProds.map(p => p.id));
+          for (const item of finalItems) {
+            if (!serverProdIds.has(item.id)) {
+              api.createProduct(item).catch(() => {});
+            }
+          }
+        }
+
+        if (serverCats.length < finalCats.length) {
+          const serverCatSet = new Set(serverCats);
+          for (const cat of finalCats) {
+            if (!serverCatSet.has(cat)) {
+              api.addCategory(cat).catch(() => {});
+            }
+          }
+        }
+      } catch (err: any) {
+        console.warn('Backend server fetch warning (using local persistent storage):', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   useEffect(() => {
     loadInitialData();
