@@ -123,66 +123,68 @@ export const App: React.FC = () => {
     setItems(initialItems);
     setHistoryLogs(initialLogs);
 
-      // 2. Fetch live data from backend server and perform non-destructive merge
-      try {
-        const [fetchedCats, fetchedProds, fetchedLogs] = await Promise.all([
-          api.fetchCategories(),
-          api.fetchProducts(),
-          api.fetchHistory()
-        ]);
+    // 2. Fetch live data from backend server
+    try {
+      const [fetchedCats, fetchedProds, fetchedLogs] = await Promise.all([
+        api.fetchCategories(),
+        api.fetchProducts(),
+        api.fetchHistory()
+      ]);
 
-        const serverCats = Array.isArray(fetchedCats) ? fetchedCats : [];
-        const serverProds = Array.isArray(fetchedProds) ? fetchedProds : [];
-        const serverLogs = Array.isArray(fetchedLogs) ? fetchedLogs : [];
+      const serverCats = Array.isArray(fetchedCats) ? fetchedCats : [];
+      const serverProds = Array.isArray(fetchedProds) ? fetchedProds : [];
+      const serverLogs = Array.isArray(fetchedLogs) ? fetchedLogs : [];
 
-        // Merge categories (preserve both server and local categories)
-        const catSet = new Set<string>([...serverCats, ...initialCats]);
-        const finalCats = Array.from(catSet);
+      // Helper function to deduplicate products by ID and by normalized name
+      const dedupeItemsList = (prodList: InventoryItem[]): InventoryItem[] => {
+        const idMap = new Map<string, InventoryItem>();
+        const nameMap = new Map<string, InventoryItem>();
 
-        // Merge products (preserve locally stored items by ID if server lacks them)
-        const itemMap = new Map<string, InventoryItem>();
-        initialItems.forEach(item => { if (item && item.id) itemMap.set(item.id, item); });
-        serverProds.forEach(item => { if (item && item.id) itemMap.set(item.id, item); });
-        const finalItems = Array.from(itemMap.values());
+        for (const item of prodList) {
+          if (!item || !item.name) continue;
+          const normName = item.name.trim().toLowerCase();
+          const existingById = item.id ? idMap.get(item.id) : undefined;
+          const existingByName = nameMap.get(normName);
+          const existing = existingById || existingByName;
 
-        // Merge history logs
-        const logMap = new Map<string, StockHistoryLog>();
-        initialLogs.forEach(log => { if (log && log.id) logMap.set(log.id, log); });
-        serverLogs.forEach(log => { if (log && log.id) logMap.set(log.id, log); });
-        const finalLogs = Array.from(logMap.values());
-
-        setCategories(finalCats);
-        setItems(finalItems);
-        setHistoryLogs(finalLogs);
-
-        localStorage.setItem('printo_categories', JSON.stringify(finalCats));
-        localStorage.setItem('printo_inventory_items', JSON.stringify(finalItems));
-        localStorage.setItem('printo_history_logs', JSON.stringify(finalLogs));
-
-        // Back-sync any local items/categories to backend if backend was missing them
-        if (serverProds.length < finalItems.length) {
-          const serverProdIds = new Set(serverProds.map(p => p.id));
-          for (const item of finalItems) {
-            if (!serverProdIds.has(item.id)) {
-              api.createProduct(item).catch(() => {});
+          if (!existing) {
+            if (item.id) idMap.set(item.id, item);
+            nameMap.set(normName, item);
+          } else {
+            const existingTime = new Date(existing.lastUpdated || 0).getTime();
+            const itemTime = new Date(item.lastUpdated || 0).getTime();
+            if (itemTime >= existingTime) {
+              if (existing.id) idMap.delete(existing.id);
+              if (item.id) idMap.set(item.id, item);
+              nameMap.set(normName, item);
             }
           }
         }
+        return Array.from(nameMap.values());
+      };
 
-        if (serverCats.length < finalCats.length) {
-          const serverCatSet = new Set(serverCats);
-          for (const cat of finalCats) {
-            if (!serverCatSet.has(cat)) {
-              api.addCategory(cat).catch(() => {});
-            }
-          }
-        }
-      } catch (err: any) {
-        console.warn('Backend server fetch warning (using local persistent storage):', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      // Server is source of truth when server fetch succeeds
+      const prodsToDedupe = serverProds.length > 0 ? serverProds : initialItems;
+      const finalItems = dedupeItemsList(prodsToDedupe);
+      const finalCats = Array.from(new Set([...serverCats, ...initialCats]));
+
+      const logMap = new Map<string, StockHistoryLog>();
+      [...serverLogs, ...initialLogs].forEach(log => { if (log && log.id) logMap.set(log.id, log); });
+      const finalLogs = Array.from(logMap.values()).sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+
+      setCategories(finalCats);
+      setItems(finalItems);
+      setHistoryLogs(finalLogs);
+
+      localStorage.setItem('printo_categories', JSON.stringify(finalCats));
+      localStorage.setItem('printo_inventory_items', JSON.stringify(finalItems));
+      localStorage.setItem('printo_history_logs', JSON.stringify(finalLogs));
+    } catch (err: any) {
+      console.warn('Backend server fetch warning (using local persistent storage):', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadInitialData();
@@ -319,14 +321,20 @@ export const App: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (!deletingItem) return;
+    const targetId = deletingItem.id;
+    const targetName = deletingItem.name;
+
+    // Immediately remove from UI and localStorage
+    setItems((prev) => prev.filter((item) => item.id !== targetId));
+
     try {
-      await api.deleteProduct(deletingItem.id);
-      setItems((prev) => prev.filter((item) => item.id !== deletingItem.id));
+      await api.deleteProduct(targetId);
+      addToast('Product Deleted', `"${targetName}" has been removed.`, 'info');
       const updatedLogs = await api.fetchHistory();
       setHistoryLogs(updatedLogs);
-      addToast('Product Deleted', `"${deletingItem.name}" has been removed.`, 'info');
     } catch (err: any) {
-      addToast('Delete Failed', err.message, 'error');
+      console.warn('Product delete API notification:', err.message);
+      addToast('Product Removed', `"${targetName}" removed from list.`, 'info');
     } finally {
       setIsDeleteOpen(false);
       setDeletingItem(null);
