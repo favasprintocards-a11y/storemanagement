@@ -363,9 +363,17 @@ export const App: React.FC = () => {
 
   const handleDeleteHistoryLog = async (logId: string) => {
     try {
-      const updatedLogs = await api.deleteHistoryLog(logId);
-      setHistoryLogs(updatedLogs);
-      addToast('Log Deleted', 'History record removed.', 'info');
+      const res = await api.deleteHistoryLog(logId);
+      if (res.logs) {
+        setHistoryLogs(res.logs);
+      }
+      if (res.products && res.products.length > 0) {
+        setItems(res.products);
+      } else {
+        const fetchedProds = await api.fetchProducts();
+        setItems(fetchedProds);
+      }
+      addToast('Log Deleted', 'History record removed and product stock updated.', 'info');
     } catch (err: any) {
       addToast('Error', err.message, 'error');
     }

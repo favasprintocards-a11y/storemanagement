@@ -99,12 +99,16 @@ export const api = {
     return res.json();
   },
 
-  async deleteHistoryLog(id: string): Promise<StockHistoryLog[]> {
+  async deleteHistoryLog(id: string): Promise<{ logs: StockHistoryLog[]; products: InventoryItem[] }> {
     const res = await fetch(`${API_BASE}/history/${id}`, {
       method: 'DELETE'
     });
     if (!res.ok) throw new Error('Failed to delete history log');
-    return res.json();
+    const data = await res.json();
+    if (Array.isArray(data)) {
+      return { logs: data, products: [] };
+    }
+    return data;
   },
 
   async clearHistoryLogs(): Promise<StockHistoryLog[]> {
