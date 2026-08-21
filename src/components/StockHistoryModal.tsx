@@ -55,16 +55,48 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
   const [selectedMonthKey, setSelectedMonthKey] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [movementFilter, setMovementFilter] = useState<'all' | 'in' | 'out'>('all');
+  const [activeProductFilter, setActiveProductFilter] = useState<string | null>(selectedProductFilter || null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveProductFilter(selectedProductFilter || null);
+      setSelectedMonthKey(null);
+      setSearchTerm('');
+      setMovementFilter('all');
+    }
+  }, [selectedProductFilter, isOpen]);
 
   // Helper check for Stock In vs Stock Out
   const isStockIn = (type: string, changeQty: number) => type === 'add' || type === 'create' || changeQty > 0;
   const isStockOut = (type: string, changeQty: number) => type === 'minus' || type === 'delete' || changeQty < 0;
 
-  // Calculate monthly summaries grouped by Month and Year
+  // Filter logs by clicked product filter if active
+  const relevantLogs = useMemo(() => {
+    if (!activeProductFilter) return historyLogs;
+    const filterLower = activeProductFilter.trim().toLowerCase();
+    return historyLogs.filter((log) => {
+      if (!log) return false;
+      const matchId = log.productId && log.productId.toLowerCase() === filterLower;
+      const matchName = log.productName && log.productName.trim().toLowerCase() === filterLower;
+      return matchId || matchName;
+    });
+  }, [historyLogs, activeProductFilter]);
+
+  // Derived clicked product display name
+  const filteredProductName = useMemo(() => {
+    if (!activeProductFilter) return null;
+    const found = historyLogs.find(
+      (l) => (l.productId && l.productId.toLowerCase() === activeProductFilter.toLowerCase()) ||
+             (l.productName && l.productName.toLowerCase() === activeProductFilter.toLowerCase())
+    );
+    return found ? found.productName : activeProductFilter;
+  }, [historyLogs, activeProductFilter]);
+
+  // Calculate monthly summaries grouped by Month and Year based on relevantLogs
   const monthlySummaries: MonthlySummary[] = useMemo(() => {
     const map = new Map<string, MonthlySummary>();
 
-    for (const log of historyLogs) {
+    for (const log of relevantLogs) {
       if (!log.timestamp) continue;
       const date = new Date(log.timestamp);
       if (isNaN(date.getTime())) continue;
@@ -112,7 +144,7 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
       if (b.year !== a.year) return b.year - a.year;
       return b.month - a.month;
     });
-  }, [historyLogs]);
+  }, [relevantLogs]);
 
   // Selected Month Summary object
   const activeMonthSummary = useMemo(() => {
@@ -205,20 +237,51 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
             <History size={22} />
             <div>
               <h3 className="modal-title" style={{ fontSize: '1.2rem', lineHeight: 1.2 }}>
-                {selectedMonthKey && activeMonthSummary
+                {filteredProductName
+                  ? `Stock History - ${filteredProductName}`
+                  : selectedMonthKey && activeMonthSummary
                   ? `Stock Movement - ${activeMonthSummary.monthLabel}`
                   : 'Stock History by Month & Year'}
               </h3>
               <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                {selectedMonthKey && activeMonthSummary
+                {filteredProductName
+                  ? `Stock movement history specifically for product "${filteredProductName}"`
+                  : selectedMonthKey && activeMonthSummary
                   ? `Complete incoming and outgoing transactions for ${activeMonthSummary.monthLabel}`
                   : 'Select a month and year to view full stock in and stock out history'}
               </p>
             </div>
           </div>
-          <button className="close-btn" onClick={onClose}>
-            <X size={18} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {filteredProductName && (
+              <div 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  background: 'var(--primary-light)', 
+                  padding: '4px 10px', 
+                  borderRadius: '999px', 
+                  border: '1px solid var(--primary)', 
+                  fontSize: '0.78rem', 
+                  color: 'var(--primary)', 
+                  fontWeight: 600 
+                }}
+              >
+                <span>Product: <strong>{filteredProductName}</strong></span>
+                <button 
+                  onClick={() => setActiveProductFilter(null)}
+                  title="Show history for all products"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', padding: '2px' }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+            <button className="close-btn" onClick={onClose}>
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="modal-body" style={{ gap: '1rem', padding: '1.25rem' }}>
@@ -229,9 +292,9 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
                 <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                   Monthly History Records ({monthlySummaries.length} months)
                 </span>
-                {historyLogs.length > 0 && (
+                {relevantLogs.length > 0 && (
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    Total Logs: <strong>{historyLogs.length}</strong>
+                    Total Logs: <strong>{relevantLogs.length}</strong>
                   </span>
                 )}
               </div>
