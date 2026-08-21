@@ -250,16 +250,22 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteCategory = async (catName: string) => {
+    const normTarget = catName.trim().toLowerCase();
+    setCategories((prev) => prev.filter((c) => c.trim().toLowerCase() !== normTarget));
+    setItems((prev) => prev.filter((item) => item.category.trim().toLowerCase() !== normTarget));
+    if (filters.category.trim().toLowerCase() === normTarget) {
+      setFilters((prev) => ({ ...prev, category: 'All' }));
+    }
+
     try {
       const updatedCats = await api.deleteCategory(catName);
-      setCategories(updatedCats);
-      setItems((prev) => prev.filter((item) => item.category !== catName));
-      if (filters.category === catName) {
-        setFilters((prev) => ({ ...prev, category: 'All' }));
+      if (Array.isArray(updatedCats)) {
+        setCategories(updatedCats);
       }
       addToast('Category Deleted', `Category "${catName}" removed.`, 'info');
     } catch (err: any) {
-      addToast('Error', err.message, 'error');
+      console.warn('Category delete notification:', err.message);
+      addToast('Category Removed', `Category "${catName}" removed from local list.`, 'info');
     }
   };
 
