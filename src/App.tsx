@@ -94,21 +94,21 @@ export const App: React.FC = () => {
     const cachedItems = localStorage.getItem('printo_inventory_items');
     const cachedLogs = localStorage.getItem('printo_history_logs');
 
-    let initialCats: string[] = [];
-    let initialItems: InventoryItem[] = [];
+    let initialCats: string[] = INITIAL_CATEGORIES;
+    let initialItems: InventoryItem[] = INITIAL_PRODUCTS;
     let initialLogs: StockHistoryLog[] = [];
 
     if (cachedCats) {
       try {
         const parsed = JSON.parse(cachedCats);
-        if (Array.isArray(parsed)) initialCats = parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) initialCats = parsed;
       } catch (e) {}
     }
 
     if (cachedItems) {
       try {
         const parsed = JSON.parse(cachedItems);
-        if (Array.isArray(parsed)) initialItems = parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) initialItems = parsed;
       } catch (e) {}
     }
 
@@ -163,10 +163,10 @@ export const App: React.FC = () => {
         return Array.from(nameMap.values());
       };
 
-      // Server is source of truth when server fetch succeeds
-      const prodsToDedupe = serverProds.length > 0 ? serverProds : initialItems;
-      const finalItems = dedupeItemsList(prodsToDedupe);
-      const finalCats = Array.from(new Set([...serverCats, ...initialCats]));
+      // Safely merge server products, local cached products, and fallback defaults
+      const combinedProds = [...serverProds, ...initialItems];
+      const finalItems = dedupeItemsList(combinedProds.length > 0 ? combinedProds : INITIAL_PRODUCTS);
+      const finalCats = Array.from(new Set([...serverCats, ...initialCats, ...INITIAL_CATEGORIES]));
 
       const logMap = new Map<string, StockHistoryLog>();
       [...serverLogs, ...initialLogs].forEach(log => { if (log && log.id) logMap.set(log.id, log); });
