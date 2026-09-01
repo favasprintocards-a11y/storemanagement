@@ -326,8 +326,16 @@ export const App: React.FC = () => {
   const handleSaveProduct = async (formData: Partial<InventoryItem>) => {
     try {
       if (editingItem) {
+        const oldName = editingItem.name;
         const updated = await api.updateProduct(editingItem.id, formData);
         setItems((prev) => prev.map((item) => (item.id === editingItem.id ? updated : item)));
+        setHistoryLogs((prev) =>
+          prev.map((log) =>
+            log.productId === editingItem.id || log.productName.trim().toLowerCase() === oldName.trim().toLowerCase()
+              ? { ...log, productName: updated.name, category: updated.category }
+              : log
+          )
+        );
         if (updated.category && !categories.includes(updated.category)) {
           try {
             const updatedCats = await api.addCategory(updated.category);
@@ -335,6 +343,12 @@ export const App: React.FC = () => {
           } catch (e) {
             setCategories((prev) => Array.from(new Set([...prev, updated.category])));
           }
+        }
+        try {
+          const updatedLogs = await api.fetchHistory();
+          setHistoryLogs(updatedLogs);
+        } catch (e) {
+          console.warn('History logs refresh warning:', e);
         }
         addToast('Product Updated', `Successfully updated "${updated.name}".`, 'success');
       } else {
