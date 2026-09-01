@@ -242,9 +242,43 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleRenameCategory = (oldName: string, newName: string) => {
-    setCategories((prev) => prev.map((c) => (c === oldName ? newName : c)));
-    addToast('Category Renamed', `Renamed "${oldName}" to "${newName}".`, 'info');
+  const handleRenameCategory = async (oldName: string, newName: string) => {
+    const normOld = oldName.trim().toLowerCase();
+    const trimmedNew = newName.trim();
+
+    // Optimistic UI updates
+    setCategories((prev) => prev.map((c) => (c.trim().toLowerCase() === normOld ? trimmedNew : c)));
+    setItems((prev) =>
+      prev.map((item) =>
+        item.category && item.category.trim().toLowerCase() === normOld
+          ? { ...item, category: trimmedNew }
+          : item
+      )
+    );
+    setHistoryLogs((prev) =>
+      prev.map((log) =>
+        log.category && log.category.trim().toLowerCase() === normOld
+          ? { ...log, category: trimmedNew }
+          : log
+      )
+    );
+    if (filters.category.trim().toLowerCase() === normOld) {
+      setFilters((prev) => ({ ...prev, category: trimmedNew }));
+    }
+
+    try {
+      const response = await api.renameCategory(oldName, newName);
+      if (response && Array.isArray(response.categories)) {
+        setCategories(response.categories);
+      }
+      if (response && Array.isArray(response.products)) {
+        setItems(response.products);
+      }
+      addToast('Category Renamed', `Renamed "${oldName}" to "${newName}".`, 'success');
+    } catch (err: any) {
+      console.warn('Category rename warning:', err.message);
+      addToast('Category Renamed', `Renamed "${oldName}" to "${newName}" locally.`, 'info');
+    }
   };
 
   const handleDeleteCategory = async (catName: string) => {

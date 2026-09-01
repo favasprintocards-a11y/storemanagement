@@ -33,12 +33,20 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
 
   useEffect(() => {
     if (editItem) {
       setFormData(editItem);
+      if (editItem.category && !categories.includes(editItem.category)) {
+        setIsCustomCategory(true);
+      } else {
+        setIsCustomCategory(false);
+      }
     } else {
-      setFormData(emptyForm(defaultCategory, categories));
+      const initial = emptyForm(defaultCategory, categories);
+      setFormData(initial);
+      setIsCustomCategory(categories.length === 0);
     }
     setErrors({});
   }, [editItem, isOpen, defaultCategory, categories]);
@@ -48,6 +56,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const validate = (): boolean => {
     const newErr: Record<string, string> = {};
     if (!formData.name?.trim()) newErr.name = 'Product name is required';
+    if (!formData.category?.trim()) newErr.category = 'Category name is required';
     if (formData.quantity === undefined || formData.quantity < 0) {
       newErr.quantity = 'Stock quantity is required';
     }
@@ -68,6 +77,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
     onSave({
       ...formData,
+      category: formData.category?.trim(),
       quantity: qty,
       minThreshold: thresh,
       unit: formData.unit?.trim() || 'unit',
@@ -111,25 +121,49 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               {/* Category */}
               <div className="form-group">
                 <label className="form-label">Category *</label>
-                {categories.length > 0 ? (
+                {categories.length > 0 && !isCustomCategory ? (
                   <select
                     className="form-select"
                     value={formData.category || categories[0] || ''}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    onChange={(e) => {
+                      if (e.target.value === '__custom__') {
+                        setIsCustomCategory(true);
+                        setFormData({ ...formData, category: '' });
+                      } else {
+                        setFormData({ ...formData, category: e.target.value });
+                      }
+                    }}
                   >
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
+                    <option value="__custom__">+ Add New Category...</option>
                   </select>
                 ) : (
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Enter category name"
-                    value={formData.category || ''}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Enter new category name..."
+                      value={formData.category || ''}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    />
+                    {categories.length > 0 && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', alignSelf: 'flex-start' }}
+                        onClick={() => {
+                          setIsCustomCategory(false);
+                          setFormData({ ...formData, category: categories[0] || '' });
+                        }}
+                      >
+                        ← Choose from existing categories
+                      </button>
+                    )}
+                  </div>
                 )}
+                {errors.category && <span style={{ color: 'var(--danger)', fontSize: '0.75rem' }}>{errors.category}</span>}
               </div>
 
               {/* Unit Type (Manual Text Entry) */}

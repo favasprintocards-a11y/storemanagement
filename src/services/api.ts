@@ -35,6 +35,19 @@ export const api = {
     return res.json();
   },
 
+  async renameCategory(oldName: string, newName: string): Promise<{ categories: string[]; products?: InventoryItem[] }> {
+    const res = await fetch(`${API_BASE}/categories/rename`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldName, newName })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to rename category');
+    }
+    return res.json();
+  },
+
   // Products
   async fetchProducts(): Promise<InventoryItem[]> {
     const res = await fetch(`${API_BASE}/products`);
