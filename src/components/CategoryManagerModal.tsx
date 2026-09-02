@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, FolderPlus, Edit2, Trash2, Check, Plus, Folder, AlertTriangle } from 'lucide-react';
+import { X, FolderPlus, Edit2, Trash2, Check, Plus, Folder, AlertTriangle, Search } from 'lucide-react';
 import { InventoryItem } from '../types/inventory';
 
 interface CategoryManagerModalProps {
@@ -26,6 +26,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
   const [editValue, setEditValue] = useState('');
   const [deletingCat, setDeletingCat] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [catSearchQuery, setCatSearchQuery] = useState('');
 
   if (!isOpen) return null;
 
@@ -70,6 +71,10 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
     setDeletingCat(null);
   };
 
+  const filteredCategories = categories.filter((c) =>
+    c.toLowerCase().includes(catSearchQuery.toLowerCase().trim())
+  );
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-container" style={{ maxWidth: '540px' }} onClick={(e) => e.stopPropagation()}>
@@ -104,13 +109,35 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
           </form>
           {error && <span style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '-0.5rem' }}>{error}</span>}
 
+          {/* Search Categories Input */}
+          <div className="search-box" style={{ width: '100%' }}>
+            <Search className="search-icon" size={16} />
+            <input
+              type="text"
+              className="search-input"
+              style={{ fontSize: '0.85rem', padding: '0.4rem 0.6rem 0.4rem 2.2rem' }}
+              placeholder="Search categories..."
+              value={catSearchQuery}
+              onChange={(e) => setCatSearchQuery(e.target.value)}
+            />
+            {catSearchQuery && (
+              <button
+                className="clear-search-btn"
+                onClick={() => setCatSearchQuery('')}
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
           {/* Categories List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '340px', overflowY: 'auto' }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-              Existing Categories ({categories.length})
+              Existing Categories ({filteredCategories.length} / {categories.length})
             </div>
 
-            {categories.map((cat) => {
+            {filteredCategories.map((cat) => {
               const productCount = items.filter((i) => i.category === cat).length;
               const isEditing = editingCat === cat;
               const isDeleting = deletingCat === cat;

@@ -11,7 +11,8 @@ import {
   Package, 
   FolderPlus,
   AlertTriangle,
-  X
+  X,
+  Search
 } from 'lucide-react';
 import { InventoryItem } from '../types/inventory';
 
@@ -19,6 +20,7 @@ interface CategoryDrilldownViewProps {
   categories: string[];
   items: InventoryItem[];
   searchQuery: string;
+  onSearchChange: (query: string) => void;
   onOpenCategoryManager: () => void;
   onDeleteCategory?: (categoryName: string) => void;
   onOpenStockAdjustModal: (item: InventoryItem, mode: 'add' | 'minus') => void;
@@ -32,6 +34,7 @@ export const CategoryDrilldownView: React.FC<CategoryDrilldownViewProps> = ({
   categories,
   items,
   searchQuery,
+  onSearchChange,
   onOpenCategoryManager,
   onDeleteCategory,
   onOpenStockAdjustModal,
@@ -43,12 +46,13 @@ export const CategoryDrilldownView: React.FC<CategoryDrilldownViewProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [cardSearchQueries, setCardSearchQueries] = useState<Record<string, string>>({});
 
   // Filter items by category & global search
   const filteredProducts = items.filter((item) => {
     const matchesCat = !selectedCategory || item.category === selectedCategory;
     const q = searchQuery.toLowerCase().trim();
-    const matchesSearch = !q || item.name.toLowerCase().includes(q);
+    const matchesSearch = !q || item.name.toLowerCase().includes(q) || item.id.toLowerCase().includes(q);
     return matchesCat && matchesSearch;
   });
 
@@ -66,58 +70,85 @@ export const CategoryDrilldownView: React.FC<CategoryDrilldownViewProps> = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      {/* Navigation Breadcrumb Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem' }}>
-          <button
-            onClick={() => {
-              setSelectedCategory(null);
-              setExpandedProductId(null);
-            }}
-            style={{
-              color: selectedCategory ? 'var(--primary)' : 'var(--text-primary)',
-              fontWeight: selectedCategory ? 500 : 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            <Folder size={18} />
-            <span>Categories</span>
-          </button>
+      {/* Top Search Bar & Category Navigation Header */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem' }}>
+            <button
+              onClick={() => {
+                setSelectedCategory(null);
+                setExpandedProductId(null);
+              }}
+              style={{
+                color: selectedCategory ? 'var(--primary)' : 'var(--text-primary)',
+                fontWeight: selectedCategory ? 500 : 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <Folder size={18} />
+              <span>Categories</span>
+            </button>
 
-          {selectedCategory && (
-            <>
-              <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
-              <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                {selectedCategory}
-              </span>
-            </>
+            {selectedCategory && (
+              <>
+                <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
+                <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {selectedCategory}
+                </span>
+              </>
+            )}
+          </div>
+
+          {selectedCategory ? (
+            <button
+              className="btn btn-secondary"
+              style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', gap: '4px' }}
+              onClick={() => {
+                setSelectedCategory(null);
+                setExpandedProductId(null);
+              }}
+            >
+              <ArrowLeft size={15} />
+              <span>Back to Categories</span>
+            </button>
+          ) : (
+            <button
+              className="btn btn-primary"
+              style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', gap: '6px' }}
+              onClick={onOpenCategoryManager}
+            >
+              <FolderPlus size={16} />
+              <span>Add / Manage Categories</span>
+            </button>
           )}
         </div>
 
-        {selectedCategory ? (
-          <button
-            className="btn btn-secondary"
-            style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', gap: '4px' }}
-            onClick={() => {
-              setSelectedCategory(null);
-              setExpandedProductId(null);
-            }}
-          >
-            <ArrowLeft size={15} />
-            <span>Back to Categories</span>
-          </button>
-        ) : (
-          <button
-            className="btn btn-primary"
-            style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', gap: '6px' }}
-            onClick={onOpenCategoryManager}
-          >
-            <FolderPlus size={16} />
-            <span>Add / Manage Categories</span>
-          </button>
-        )}
+        {/* Global & Category Dedicated Search Bar */}
+        <div className="search-box" style={{ width: '100%' }}>
+          <Search className="search-icon" size={18} />
+          <input
+            type="text"
+            className="search-input"
+            placeholder={
+              selectedCategory
+                ? `Search products inside "${selectedCategory}"...`
+                : 'Search categories or products across all categories...'
+            }
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              className="clear-search-btn"
+              onClick={() => onSearchChange('')}
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TIER 1: CATEGORIES CARDS GRID */}
@@ -129,9 +160,11 @@ export const CategoryDrilldownView: React.FC<CategoryDrilldownViewProps> = ({
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.1rem' }}>
             {categories.map((cat) => {
               const catItems = items.filter((i) => (i.category || '').trim().toLowerCase() === (cat || '').trim().toLowerCase());
+              const cardQuery = (cardSearchQueries[cat] || '').toLowerCase().trim();
+              const matchingItems = catItems.filter((i) => !cardQuery || i.name.toLowerCase().includes(cardQuery));
 
               return (
                 <div
@@ -139,6 +172,9 @@ export const CategoryDrilldownView: React.FC<CategoryDrilldownViewProps> = ({
                   onClick={() => {
                     setSelectedCategory(cat);
                     setExpandedProductId(null);
+                    if (cardSearchQueries[cat]) {
+                      onSearchChange(cardSearchQueries[cat]);
+                    }
                   }}
                   style={{
                     background: 'var(--bg-surface)',
@@ -154,7 +190,7 @@ export const CategoryDrilldownView: React.FC<CategoryDrilldownViewProps> = ({
                     boxShadow: 'var(--shadow-sm)',
                     position: 'relative'
                   }}
-                  className="kpi-card"
+                  className="kpi-card category-card"
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -175,6 +211,53 @@ export const CategoryDrilldownView: React.FC<CategoryDrilldownViewProps> = ({
                       <ChevronRight size={20} style={{ color: 'var(--text-muted)' }} />
                     </div>
                   </div>
+
+                  {/* DEDICATED SEARCH BOX IN EVERY CATEGORY CARD */}
+                  <div 
+                    style={{ marginTop: '0.25rem' }} 
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="cat-card-search-wrapper">
+                      <Search size={14} className="cat-card-search-icon" />
+                      <input
+                        type="text"
+                        className="cat-card-search-input"
+                        placeholder={`Search in ${cat}...`}
+                        value={cardSearchQueries[cat] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCardSearchQueries((prev) => ({ ...prev, [cat]: val }));
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            setSelectedCategory(cat);
+                            if (cardSearchQueries[cat]) {
+                              onSearchChange(cardSearchQueries[cat]);
+                            }
+                          }
+                        }}
+                      />
+                      {cardSearchQueries[cat] && (
+                        <button
+                          type="button"
+                          className="cat-card-search-clear"
+                          onClick={() => {
+                            setCardSearchQueries((prev) => ({ ...prev, [cat]: '' }));
+                          }}
+                          title="Clear category search"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Filter result badge indicator inside card */}
+                    {cardQuery && (
+                      <div style={{ fontSize: '0.74rem', color: 'var(--primary)', marginTop: '6px', fontWeight: 600 }}>
+                        {matchingItems.length} of {catItems.length} items match "{cardSearchQueries[cat]}"
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -194,7 +277,7 @@ export const CategoryDrilldownView: React.FC<CategoryDrilldownViewProps> = ({
                 justifyContent: 'center',
                 gap: '0.5rem',
                 color: 'var(--primary)',
-                minHeight: '110px',
+                minHeight: '130px',
                 transition: 'all var(--transition-fast)'
               }}
               className="kpi-card"

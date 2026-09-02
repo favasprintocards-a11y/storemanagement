@@ -560,6 +560,7 @@ export const App: React.FC = () => {
             categories={categories}
             items={filteredItems}
             searchQuery={filters.searchQuery}
+            onSearchChange={(q) => setFilters((prev) => ({ ...prev, searchQuery: q }))}
             onOpenCategoryManager={() => setIsCategoryModalOpen(true)}
             onDeleteCategory={handleDeleteCategory}
             onOpenStockAdjustModal={(item, mode) => {
